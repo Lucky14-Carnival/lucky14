@@ -1,2 +1,15 @@
-FROM alpine:3.20
-CMD ["sh", "-c", "echo ok && sleep 3600"]
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+WORKDIR /app
+
+COPY Lucky14/Lucky14/Lucky14/pom.xml .
+COPY Lucky14/Lucky14/Lucky14/src ./src
+
+RUN mvn -q -DskipTests package
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+COPY --from=build /app/target/Lucky14-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE 10000
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
