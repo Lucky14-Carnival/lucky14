@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Lucky14Application" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <envs>
+      <env name="TWILIO_ACCOUNT_SID" value="AC178dec88f612195e1aada5f69df1b650 TWILIO_AUTH_TOKEN=0abc9a00959f4bcc9758100b7c9afff9 TWILIO_API_KEY=SK2fb79048462a42a8231eb2a298cbffa5 TWILIO_API_SECRET=3ssTgzPfZBatIER9LLmPYCKKURbljKmE TWILIO_FROM_NUMBER=+19478370900" />
+    </envs>
+    <module name="Lucky14" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="PawerOpp.Lucky14.Lucky14Application" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/Lucky14" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
