@@ -1,10 +1,11 @@
 services:
   - type: web
     name: lucky14-backend
-    runtime: docker
+    runtime: native
+    rootDir: Lucky14
     plan: free
-    dockerfilePath: ./Dockerfile
-    autoDeploy: true
+    buildCommand: mvn -q -DskipTests package
+    startCommand: java -jar target/Lucky14-0.0.1-SNAPSHOT.jar
     healthCheckPath: /api/v1/branches/getAllBranches
     envVars:
       - key: PORT
