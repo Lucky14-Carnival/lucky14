@@ -1,6 +1,4 @@
-.git
-.gitignore
-**/target
-**/.idea
-**/.env
-**/node_modules
+target
+.idea
+.env
+.env.*
