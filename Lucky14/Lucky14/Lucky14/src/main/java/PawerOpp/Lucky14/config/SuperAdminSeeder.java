@@ -11,7 +11,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -28,10 +29,43 @@ public class SuperAdminSeeder {
     private final PasswordEncoder passwordEncoder;
 
     @EventListener(ApplicationReadyEvent.class)
-    @Transactional
     public void seedSuperAdmin() {
-        log.info("Seeding super admin account if needed");
+        Thread seederThread = new Thread(this::seedWithRetry, "super-admin-seeder");
+        seederThread.setDaemon(true);
+        seederThread.start();
+    }
 
+    private void seedWithRetry() {
+        int attempts = 0;
+        int maxAttempts = 12;
+
+        while (attempts < maxAttempts) {
+            try {
+                log.info("Seeding super admin account if needed (attempt {}/{})", attempts + 1, maxAttempts);
+                seedOnce();
+                log.info("Super admin seed completed for username={}", SUPER_ADMIN_USERNAME);
+                return;
+            } catch (Exception ex) {
+                attempts++;
+                log.warn("Super admin seed attempt {} failed: {}", attempts, ex.getMessage());
+
+                if (attempts >= maxAttempts) {
+                    log.error("Super admin seed failed after {} attempts", maxAttempts, ex);
+                    return;
+                }
+
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Super admin seed retry sleep interrupted");
+                    return;
+                }
+            }
+        }
+    }
+
+    private void seedOnce() {
         Users user = usersRepository.findByUsername(SUPER_ADMIN_USERNAME)
                 .orElseGet(Users::new);
 
@@ -47,8 +81,6 @@ public class SuperAdminSeeder {
         Users savedUser = usersRepository.saveAndFlush(user);
         upsertContact(savedUser, ContactInfo.ContactType.email, SUPER_ADMIN_EMAIL);
         upsertContact(savedUser, ContactInfo.ContactType.phone, SUPER_ADMIN_PHONE);
-
-        log.info("Super admin seed completed for username={}", SUPER_ADMIN_USERNAME);
     }
 
     private void upsertContact(Users user, ContactInfo.ContactType type, String value) {
@@ -57,6 +89,6 @@ public class SuperAdminSeeder {
         contact.setUsers(user);
         contact.setType(type);
         contact.setValue(value);
-        contactInfoRepository.save(contact);
+        contactInfoRepository.saveAndFlush(contact);
     }
 }
