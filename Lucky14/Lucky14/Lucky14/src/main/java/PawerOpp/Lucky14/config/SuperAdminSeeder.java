@@ -27,9 +27,7 @@ public class SuperAdminSeeder {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        Thread seederThread = new Thread(this::seedUntilSuccessful, "super-admin-seeder");
-        seederThread.setDaemon(true);
-        seederThread.start();
+        seedUntilSuccessful();
     }
 
     private void seedUntilSuccessful() {
