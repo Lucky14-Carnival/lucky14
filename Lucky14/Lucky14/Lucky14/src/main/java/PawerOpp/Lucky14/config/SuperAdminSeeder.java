@@ -3,8 +3,7 @@ package PawerOpp.Lucky14.config;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SuperAdminSeeder {
+public class SuperAdminSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(SuperAdminSeeder.class);
 
@@ -25,8 +24,8 @@ public class SuperAdminSeeder {
     private final PasswordEncoder passwordEncoder;
     private final Environment environment;
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationReady() {
+    @Override
+    public void run(String... args) {
         seedUntilSuccessful();
     }
 
