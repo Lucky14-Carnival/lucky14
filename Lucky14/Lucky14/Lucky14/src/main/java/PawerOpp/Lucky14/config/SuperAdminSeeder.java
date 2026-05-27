@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class SuperAdminSeeder {
     private final UsersRepository usersRepository;
     private final ContactInfoRepository contactInfoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Environment environment;
 
     @EventListener(ApplicationReadyEvent.class)
     public void seedSuperAdmin() {
@@ -37,11 +39,11 @@ public class SuperAdminSeeder {
 
     private void seedWithRetry() {
         int attempts = 0;
-        int maxAttempts = 12;
 
-        while (attempts < maxAttempts) {
+        while (true) {
             try {
-                log.info("Seeding super admin account if needed (attempt {}/{})", attempts + 1, maxAttempts);
+                log.info("Seeding super admin account if needed (attempt {})", attempts + 1);
+                log.info("Active DB_URL: {}", maskDatabaseUrl(environment.getProperty("DB_URL")));
                 seedOnce();
                 log.info("Super admin seed completed for username={}", SUPER_ADMIN_USERNAME);
                 return;
@@ -49,13 +51,8 @@ public class SuperAdminSeeder {
                 attempts++;
                 log.warn("Super admin seed attempt {} failed: {}", attempts, ex.getMessage());
 
-                if (attempts >= maxAttempts) {
-                    log.error("Super admin seed failed after {} attempts", maxAttempts, ex);
-                    return;
-                }
-
                 try {
-                    TimeUnit.SECONDS.sleep(5);
+                    TimeUnit.SECONDS.sleep(10);
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                     log.warn("Super admin seed retry sleep interrupted");
@@ -90,5 +87,23 @@ public class SuperAdminSeeder {
         contact.setType(type);
         contact.setValue(value);
         contactInfoRepository.saveAndFlush(contact);
+    }
+
+    private String maskDatabaseUrl(String databaseUrl) {
+        if (databaseUrl == null || databaseUrl.isBlank()) {
+            return "<empty>";
+        }
+
+        int atIndex = databaseUrl.indexOf('@');
+        if (atIndex < 0) {
+            return databaseUrl;
+        }
+
+        int schemeEnd = databaseUrl.indexOf("://");
+        if (schemeEnd < 0 || schemeEnd + 3 >= atIndex) {
+            return databaseUrl;
+        }
+
+        return databaseUrl.substring(0, schemeEnd + 3) + "***:***@" + databaseUrl.substring(atIndex + 1);
     }
 }
