@@ -6,14 +6,17 @@ import PawerOpp.Lucky14.model.Users;
 import PawerOpp.Lucky14.repository.ContactInfoRepository;
 import PawerOpp.Lucky14.repository.UsersRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.CommandLineRunner;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-public class SuperAdminSeeder implements CommandLineRunner {
+public class SuperAdminSeeder {
 
     private static final String SUPER_ADMIN_USERNAME = "Allen";
     private static final String SUPER_ADMIN_PASSWORD = "Allen@Lucky14";
@@ -24,10 +27,13 @@ public class SuperAdminSeeder implements CommandLineRunner {
     private final ContactInfoRepository contactInfoRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Override
+    @EventListener(ApplicationReadyEvent.class)
     @Transactional
-    public void run(String... args) {
-        Users user = usersRepository.findByUsername(SUPER_ADMIN_USERNAME).orElseGet(Users::new);
+    public void seedSuperAdmin() {
+        log.info("Seeding super admin account if needed");
+
+        Users user = usersRepository.findByUsername(SUPER_ADMIN_USERNAME)
+                .orElseGet(Users::new);
 
         user.setUsername(SUPER_ADMIN_USERNAME);
         user.setRole(Roles.SUPER_ADMIN);
@@ -38,13 +44,16 @@ public class SuperAdminSeeder implements CommandLineRunner {
             user.setPassword(passwordEncoder.encode(SUPER_ADMIN_PASSWORD));
         }
 
-        Users savedUser = usersRepository.save(user);
+        Users savedUser = usersRepository.saveAndFlush(user);
         upsertContact(savedUser, ContactInfo.ContactType.email, SUPER_ADMIN_EMAIL);
         upsertContact(savedUser, ContactInfo.ContactType.phone, SUPER_ADMIN_PHONE);
+
+        log.info("Super admin seed completed for username={}", SUPER_ADMIN_USERNAME);
     }
 
     private void upsertContact(Users user, ContactInfo.ContactType type, String value) {
-        ContactInfo contact = contactInfoRepository.findByUsersAndType(user, type).orElseGet(ContactInfo::new);
+        ContactInfo contact = contactInfoRepository.findByUsersAndType(user, type)
+                .orElseGet(ContactInfo::new);
         contact.setUsers(user);
         contact.setType(type);
         contact.setValue(value);
