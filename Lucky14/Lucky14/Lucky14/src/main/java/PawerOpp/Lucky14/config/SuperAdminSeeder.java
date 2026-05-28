@@ -35,7 +35,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
         while (true) {
             try {
                 log.info("Seeding super admin account if needed (attempt {})", attempt);
-                log.info("Active DB_URL: {}", environment.getProperty("DB_URL", ""));
+                log.info("Resolved datasource URL: {}", environment.getProperty("spring.datasource.url", ""));
                 seedOnce();
                 log.info("Super admin seed completed for username={}", USERNAME);
                 return;
