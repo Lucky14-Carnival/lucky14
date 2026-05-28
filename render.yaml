@@ -10,15 +10,11 @@ services:
     envVars:
       - key: PORT
         value: 10000
-      - key: MYSQLHOST
+      - key: DB_URL
         sync: false
-      - key: MYSQLPORT
-        value: 3306
-      - key: MYSQLDATABASE
+      - key: DB_USERNAME
         sync: false
-      - key: MYSQLUSER
-        sync: false
-      - key: MYSQLPASSWORD
+      - key: DB_PASSWORD
         sync: false
       - key: MAIL_HOST
         value: smtp.gmail.com
