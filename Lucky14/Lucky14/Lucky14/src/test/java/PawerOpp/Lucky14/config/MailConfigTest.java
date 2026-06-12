@@ -19,7 +19,11 @@ class MailConfigTest {
                         "lucky14carnival@gmail.com ",
                         "ilgu ffqq xesa qfxw",
                         true,
-                        true
+                        true,
+                        true,
+                        5000,
+                        5000,
+                        5000
                 ));
 
         assertEquals("lucky14carnival@gmail.com", sender.getUsername());
