@@ -23,8 +23,8 @@ public class MailConfig {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost(host);
         mailSender.setPort(port);
-        mailSender.setUsername(username);
-        mailSender.setPassword(password);
+        mailSender.setUsername(username == null ? null : username.trim());
+        mailSender.setPassword(password == null ? null : password.replaceAll("\\s+", ""));
 
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.smtp.auth", String.valueOf(auth));
