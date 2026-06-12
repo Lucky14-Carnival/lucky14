@@ -5,6 +5,8 @@ import PawerOpp.Lucky14.model.Users;
 import PawerOpp.Lucky14.repository.OtpRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -36,22 +38,19 @@ public class OtpService implements IOtp{
 
     @Override
     public boolean isOtpValid(Users users, String code) {
-        Optional<OtpVerification> otpOpt =
-                otpRepository.findByUsersAndOtpCodeAndPurposeAndIsUsedFalse(
-                        users,
-                        code,
-                        OtpVerification.Purpose.change_password
-                );
-
-        if (otpOpt.isEmpty()) return false;
-
-        OtpVerification otp = otpOpt.get();
-        return !otp.getExpiryTime().isBefore(LocalDateTime.now());
+        requireValidOtp(users, code);
+        return true;
     }
 
     @Override
     public boolean validateOtp(Users users, String code) {
+        OtpVerification otp = requireValidOtp(users, code);
+        otp.setUsed(true);
+        otpRepository.saveAndFlush(otp);
+        return true;
+    }
 
+    private OtpVerification requireValidOtp(Users users, String code) {
         Optional<OtpVerification> otpOpt =
                 otpRepository.findByUsersAndOtpCodeAndPurposeAndIsUsedFalse(
                         users,
@@ -59,17 +58,15 @@ public class OtpService implements IOtp{
                         OtpVerification.Purpose.change_password
                 );
 
-        if (otpOpt.isEmpty()) return false;
-
-        OtpVerification otp = otpOpt.get();
-
-        if (otp.getExpiryTime().isBefore(LocalDateTime.now())) {
-            return false;
+        if (otpOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired OTP");
         }
 
-        otp.setUsed(true);
-        otpRepository.save(otp);
+        OtpVerification otp = otpOpt.get();
+        if (otp.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired OTP");
+        }
 
-        return true;
+        return otp;
     }
 }

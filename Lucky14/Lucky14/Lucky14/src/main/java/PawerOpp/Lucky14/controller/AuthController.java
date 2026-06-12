@@ -100,12 +100,7 @@ public class AuthController {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        boolean valid = otpService.isOtpValid(user, otp);
-        if (!valid) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message", "Invalid or expired OTP"
-            ));
-        }
+        otpService.isOtpValid(user, otp);
 
         return ResponseEntity.ok(Map.of(
                 "message", "OTP verified successfully"
@@ -143,11 +138,7 @@ public class AuthController {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        boolean valid = otpService.validateOtp(user, otp);
-
-        if (!valid) {
-            return ResponseEntity.badRequest().body("Invalid or expired OTP");
-        }
+        otpService.validateOtp(user, otp);
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
