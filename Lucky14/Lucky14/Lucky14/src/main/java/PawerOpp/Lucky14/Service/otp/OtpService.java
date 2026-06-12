@@ -37,7 +37,11 @@ public class OtpService implements IOtp{
     @Override
     public boolean isOtpValid(Users users, String code) {
         Optional<OtpVerification> otpOpt =
-                otpRepository.findByUsersAndOtpCodeAndIsUsedFalse(users, code);
+                otpRepository.findByUsersAndOtpCodeAndPurposeAndIsUsedFalse(
+                        users,
+                        code,
+                        OtpVerification.Purpose.change_password
+                );
 
         if (otpOpt.isEmpty()) return false;
 
@@ -49,7 +53,11 @@ public class OtpService implements IOtp{
     public boolean validateOtp(Users users, String code) {
 
         Optional<OtpVerification> otpOpt =
-                otpRepository.findByUsersAndOtpCodeAndIsUsedFalse(users, code);
+                otpRepository.findByUsersAndOtpCodeAndPurposeAndIsUsedFalse(
+                        users,
+                        code,
+                        OtpVerification.Purpose.change_password
+                );
 
         if (otpOpt.isEmpty()) return false;
 
