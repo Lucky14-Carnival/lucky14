@@ -4,13 +4,11 @@ import PawerOpp.Lucky14.model.OtpVerification;
 import PawerOpp.Lucky14.model.Users;
 import PawerOpp.Lucky14.repository.OtpRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,21 +35,33 @@ public class OtpService implements IOtp{
     }
 
     @Override
-    @Transactional
-    public void validateOtp(Users users, String code) {
-        if (code == null || code.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired OTP");
-        }
+    public boolean isOtpValid(Users users, String code) {
+        Optional<OtpVerification> otpOpt =
+                otpRepository.findByUsersAndOtpCodeAndIsUsedFalse(users, code);
 
-        OtpVerification otp = otpRepository
-                .findByUsersAndOtpCodeAndPurposeAndIsUsedFalse(users, code.trim(), OtpVerification.Purpose.change_password)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired OTP"));
+        if (otpOpt.isEmpty()) return false;
 
-        if (otp.getExpiryTime() == null || otp.getExpiryTime().isBefore(LocalDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired OTP");
+        OtpVerification otp = otpOpt.get();
+        return !otp.getExpiryTime().isBefore(LocalDateTime.now());
+    }
+
+    @Override
+    public boolean validateOtp(Users users, String code) {
+
+        Optional<OtpVerification> otpOpt =
+                otpRepository.findByUsersAndOtpCodeAndIsUsedFalse(users, code);
+
+        if (otpOpt.isEmpty()) return false;
+
+        OtpVerification otp = otpOpt.get();
+
+        if (otp.getExpiryTime().isBefore(LocalDateTime.now())) {
+            return false;
         }
 
         otp.setUsed(true);
-        otpRepository.saveAndFlush(otp);
+        otpRepository.save(otp);
+
+        return true;
     }
 }

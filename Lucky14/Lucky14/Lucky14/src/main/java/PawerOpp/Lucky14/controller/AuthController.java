@@ -86,8 +86,30 @@ public class AuthController {
         OtpVerification otp = otpService.createOtp(user);
         emailService.sendOtp(email, otp.getOtpCode());
 
+        return ResponseEntity.ok(Map.of(
+                "message", "OTP sent to your registered email.",
+                "maskedEmail", maskEmail(email)
+        ));
+    }
 
-        return ResponseEntity.ok("OTP sent to your registered email.");
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(
+            @RequestParam String username,
+            @RequestParam String otp
+    ) {
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        boolean valid = otpService.isOtpValid(user, otp);
+        if (!valid) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Invalid or expired OTP"
+            ));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "message", "OTP verified successfully"
+        ));
     }
 
     @PostMapping("/request-otp-sms")
@@ -121,7 +143,11 @@ public class AuthController {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        otpService.validateOtp(user, otp);
+        boolean valid = otpService.validateOtp(user, otp);
+
+        if (!valid) {
+            return ResponseEntity.badRequest().body("Invalid or expired OTP");
+        }
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -153,6 +179,35 @@ public class AuthController {
         }
 
         throw new IllegalArgumentException("Invalid phone format. Use 09XXXXXXXXX or +639XXXXXXXXX.");
+    }
+
+    private String maskEmail(String email) {
+        if (email == null) {
+            return "";
+        }
+
+        String normalized = email.trim();
+        int atIndex = normalized.indexOf('@');
+        if (atIndex <= 0 || atIndex >= normalized.length() - 1) {
+            return "***@***";
+        }
+
+        String localPart = normalized.substring(0, atIndex);
+        String domainPart = normalized.substring(atIndex + 1);
+
+        String maskedLocal = localPart.length() <= 1
+                ? "*"
+                : localPart.substring(0, 1) + "*".repeat(Math.max(2, localPart.length() - 1));
+
+        int lastDotIndex = domainPart.lastIndexOf('.');
+        String domainName = lastDotIndex > 0 ? domainPart.substring(0, lastDotIndex) : domainPart;
+        String domainSuffix = lastDotIndex > 0 ? domainPart.substring(lastDotIndex) : "";
+
+        String maskedDomain = domainName.length() <= 1
+                ? "*"
+                : domainName.substring(0, 1) + "*".repeat(Math.max(2, domainName.length() - 1));
+
+        return maskedLocal + "@" + maskedDomain + domainSuffix;
     }
 
     public record LoginRequest(
