@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.MailSendException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -42,6 +43,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MailSendException.class)
     public ResponseEntity<Map<String, Object>> handleMailSend(MailSendException ex) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Mail send failed: " + rootMessage(ex));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        String message = ex.getReason() == null ? rootMessage(ex) : ex.getReason();
+        return buildResponse(status, message);
     }
 
     @ExceptionHandler(Exception.class)
