@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface OtpRepository extends JpaRepository<OtpVerification, Long> {
 
-    Optional<OtpVerification> findByUsersAndOtpCodeAndIsUsedFalse(Users users, String otpCode);
+    Optional<OtpVerification> findByUsersAndOtpCodeAndPurposeAndIsUsedFalse(Users users, String otpCode, OtpVerification.Purpose purpose);
     void deleteAllByUsers_Id(Long userId);
     void deleteAllByUsers_Branch_Id(Long branchId);
 

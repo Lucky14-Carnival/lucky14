@@ -6,6 +6,6 @@ import PawerOpp.Lucky14.model.Users;
 public interface IOtp {
 
     OtpVerification createOtp(Users users);
-    boolean validateOtp(Users users, String code);
+    void validateOtp(Users users, String code);
 
 }
