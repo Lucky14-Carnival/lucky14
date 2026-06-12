@@ -1,6 +1,7 @@
 package PawerOpp.Lucky14.Service.email;
 
 import lombok.RequiredArgsConstructor;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,11 @@ public class EmailService implements IEmail {
 
     @Value("${MAIL_FROM:${MAIL_USERNAME:lucky14carnival@gmail.com}}")
     private String mailFrom;
+
+    @PostConstruct
+    void logMailerMode() {
+        log.info("MAILER MODE ACTIVE: Mailtrap API via HttpClient");
+    }
 
     @Override
     @Async
